@@ -1,10 +1,10 @@
 import mysql from 'mysql'
 
-export const dbConnection = mysql.createPool({
+export const dbConnection = mysql.createConnection({
   "host": "mysql",
   "user": "root",
   "password": "root",
-  "database": "",
+  "database": "smart_coffee",
   "port": 3306,
   multipleStatements: true,
 })
