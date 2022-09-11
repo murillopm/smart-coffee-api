@@ -1,6 +1,6 @@
 import mysql from 'mysql'
 
-export const dbConnection = mysql.createConnection({
+export const dbConnection = mysql.createPool({
   "host": "mysql",
   "user": "root",
   "password": "root",
