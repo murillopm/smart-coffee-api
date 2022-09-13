@@ -44,6 +44,61 @@ interface RecipeComplements {
   } []
 }
 
+type Order = {
+  recipe_id: number
+  complement_ids: number[]
+}
+
+interface RegisterOrderApiRequest {
+  user_id: number
+  orders: Order[]
+}
+
+router.post('/ordercoffee', (req, res) => {
+  const { requestBody } = req.body
+  const { orders, user_id } = requestBody as RegisterOrderApiRequest
+
+  if(!orders) {
+    return res.status(400).send({ message: 'Malformed body' })
+  }
+
+  dbConnection.getConnection((err, conn) => {
+    if (err) {
+      return res.status(500).send({ err })
+    }
+
+    orders.forEach(order => {
+      dbConnection.query(
+        'INSERT INTO client_recipes (recipe_id, client_id) VALUES (?,?)', 
+        [order.recipe_id, user_id],
+        (error, results, field) => {
+          if (error) {
+            return res.status(403).send({ error })
+          }
+          const clientRecipeInsertedId = results.insertId
+
+          const isThereAnyComplement = order.complement_ids.length > 0
+          if(isThereAnyComplement) {
+            order.complement_ids.forEach(complement => {
+              dbConnection.query(
+                'INSERT INTO client_recipe_ingredients (ingredient_id, client_recipe_id) VALUES (?,?)', 
+                [complement, clientRecipeInsertedId],
+                (error, results, field) => {
+                  if (error) {
+                    return res.status(403).send({ error })
+                  }
+                }
+              )
+            }) 
+          }
+        }
+      ) 
+    })
+    conn.release()
+    return res.status(201).send({ message: 'Item(s) successfully ordered' })
+  })
+})
+
 router.post('/register', (req, res) => {
   const { name, email } = req.body
 
@@ -62,12 +117,13 @@ router.post('/register', (req, res) => {
       [name, email, couponCode],
       (error, results, fields) => {
         conn.release()
+        const userId = results.insertId
         if (error) {
-          return res.status(403).send({ error: 'Usuário já cadastrado' })
+          return res.status(403).send({ error: 'User already registered' })
         }
         return res.status(201).send({
-          message: 'Usuário registrado', 
-          user: { name, email, couponCode } 
+          message: 'User registered', 
+          user: { id: userId, name, email, couponCode } 
         })
       }
     )
@@ -169,6 +225,8 @@ router.get('/complements', (req, res) => {
   })
 
 })
+
+
 
 export { router }
 
