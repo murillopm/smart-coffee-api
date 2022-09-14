@@ -14,7 +14,7 @@ services:
         MYSQL_USER: user
         MYSQL_PASSWORD: user
     volumes: 
-      - ./init:/docker-entrypoint-initdb.d
+      - ./src/database:/docker-entrypoint-initdb.d
   app: 
     build: .
     command: npm start
